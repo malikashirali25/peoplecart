@@ -1,0 +1,49 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Django
+*.log
+db.sqlite3
+local_settings.py
+.env
+.env.local
+.env.*
+
+# Uploaded media and collected static (do not ignore if you intentionally track them)
+media/
+static/
+staticfiles/
+
+# IDEs / editors
+.vscode/
+.idea/
+
+# Tests / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Misc
+*.bak
+*.swp
+db.sqlite3
