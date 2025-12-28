@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - PeopleCart{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<section class="hero-section" style="padding: 3rem 0;">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1>Checkout</h1>
+            <p>Complete your purchase</p>
+        </div>
+    </div>
+</section>
+
+<!-- Checkout Section -->
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <!-- Order Summary -->
+            <div class="col-lg-5 mb-4">
+                <div class="card border-0 shadow-lg sticky-top" style="top: 100px;">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-cart-check"></i> Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="order-items mb-3" style="max-height: 300px; overflow-y: auto;">
+                            {% for item in items %}
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ item.product.name }}</h6>
+                                    <small class="text-muted">Quantity: {{ item.quantity }} × ${{ item.price }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <strong>${{ item.total|floatformat:2 }}</strong>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="order-totals">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span>${{ subtotal|floatformat:2 }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tax (10%):</span>
+                                <span>${{ tax|floatformat:2 }}</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <strong>Total:</strong>
+                                <strong class="text-primary fs-5">${{ total|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Form -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-credit-card"></i> Payment Information</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Shipping Address Section -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-geo-alt"></i> Shipping Address
+                            </h6>
+                            {% if profile and profile.address1 %}
+                            <div class="bg-light p-3 rounded border">
+                                <p class="mb-1"><strong>{{ request.user.get_full_name|default:request.user.username }}</strong></p>
+                                <p class="mb-1">{{ profile.address1 }}</p>
+                                {% if profile.address2 %}<p class="mb-1">{{ profile.address2 }}</p>{% endif %}
+                                <p class="mb-1">{{ profile.city }}, {{ profile.state }} {{ profile.zipcode }}</p>
+                                <p class="mb-1">{{ profile.country }}</p>
+                                {% if profile.phone %}<p class="mb-0"><i class="bi bi-telephone"></i> {{ profile.phone }}</p>{% endif %}
+                            </div>
+                            <div class="mt-2">
+                                <a href="{% url 'update_user' %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Update Address
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                <strong>No shipping address on file.</strong>
+                                <p class="mb-2 mt-2">Please add your shipping address to complete your order.</p>
+                                <a href="{% url 'update_user' %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Add Shipping Address
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Payment Method Section -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-credit-card"></i> Payment Method
+                            </h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_111x69.jpg" 
+                                     alt="PayPal" 
+                                     style="height: 40px; margin-right: 15px;">
+                                <div>
+                                    <strong>PayPal</strong>
+                                    <p class="text-muted small mb-0">Secure payment processing</p>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle"></i> 
+                                You will be redirected to PayPal to complete your payment securely.
+                            </div>
+                        </div>
+                        
+                        <!-- PayPal Form -->
+                        <div class="paypal-button-wrapper">
+                            <div class="text-center mb-4">
+                                <h6 class="mb-3">Complete Your Payment</h6>
+                            </div>
+                            <div class="text-center">
+                                <form action="{{ form.action }}" method="post" id="paypal-payment-form" class="paypal-form">
+                                    {% csrf_token %}
+                                    {% for field in form.hidden_fields %}
+                                        {{ field }}
+                                    {% endfor %}
+                                    <button type="submit" class="btn-paypal">
+                                        <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png" alt="PayPal" class="paypal-logo">
+                                        <span>Pay with PayPal</span>
+                                    </button>
+                                </form>
+                            </div>
+                            <p class="text-center text-muted small mt-3 mb-0">
+                                <i class="bi bi-shield-check"></i> Secure payment by PayPal
+                            </p>
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            <a href="{% url 'cart' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Cart
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Store cart items in a hidden field for PayPal custom data
+document.addEventListener('DOMContentLoaded', function() {
+    const cartItems = {{ cart_items_json|safe }};
+    localStorage.setItem('checkout_cart', JSON.stringify(cartItems));
+});
+</script>
+{% endblock %}
+

@@ -1,92 +1,80 @@
 {% extends 'base.html' %}
+{% load static %}
 
+{% block title %}{{ category.name }} - PeopleCart{% endblock %}
 
 {% block content %}
-
-        <!-- Header-->
-        <header class="bg-dark py-5">
-            <div class="container px-4 px-lg-5 my-5">
-                <div class="text-center text-white">
-                    <h1 class="display-4 fw-bolder">
-                    {{ category }}
-                </h1>
-                    <p class="lead fw-normal text-white-50 mb-0">Category Page</p>
-                </div>
-            </div>
-        </header>
-        <!-- Section-->
-        <section class="py-5">
-
-            <div class="container px-4 px-lg-5 mt-5">
-            
-                <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-                        
-                {% for product in products %}
-                    {% if product.is_sale %}
-                    
-                    <div class="col mb-5">
-                        <div class="card h-100">
-                            <!-- Sale badge-->
-                            <div class="badge bg-dark text-white position-absolute" style="top: 0.5rem; right: 0.5rem">Sale</div>
-
-                            <!-- Product image-->
-                            <img class="card-img-top" src="{{ product.image.url }}" alt="..." />
-                            <!-- Product details-->
-                            <div class="card-body p-4">
-                                <div class="text-center">
-                                    <!-- Product name-->
-                                    <h5 class="fw-bolder">{{ product.name }}</h5>
-                                    <!-- Sale -->
-                <div class="d-flex justify-content-center small text-warning mb-2">
-                <div class="bi-star-fill"></div>
-                &nbsp;&nbsp;Sale!&nbsp;&nbsp;
-                <div class="bi-star-fill"></div>
-                </div>
-
-                                    <!-- Product price-->
-                                    <strike>
-                                    ${{ product.price }}
-                                    </strike>
-                                    &nbsp;
-                                    ${{ product.sale_price }}
-                                </div>
-                            </div>
-                            <!-- Product actions-->
-                            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-    <div class="text-center">
-        <a class="btn btn-outline-dark mt-auto" href="{% url 'product' product.id  %}">View Product</a>
+<!-- Header Section -->
+<section class="hero-section" style="padding: 3rem 0;">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1>{{ category.name }}</h1>
+            <p>Browse our collection of {{ category.name|lower }} books</p>
+        </div>
     </div>
-                            </div>
-                        </div>
-                    </div>
+</section>
 
+<!-- Products Section -->
+<section class="section-padding">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+            </ol>
+        </nav>
 
-                    {% else %}
-                <div class="col mb-5">
-                        <div class="card h-100">
-                            <!-- Product image-->
-                            <img class="card-img-top" src="{{ product.image.url }}" alt="..." />
-                            <!-- Product details-->
-                            <div class="card-body p-4">
-                                <div class="text-center">
-                                    <!-- Product name-->
-                                    <h5 class="fw-bolder">{{ product.name }}</h5>
-                                    <!-- Product price-->
-                                    ${{ product.price }}
-                                </div>
-                            </div>
-                            <!-- Product actions-->
-                            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                            <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'product' product.id %}">View Product</a></div>
-                            </div>
-                        </div>
-                    </div>
-
+        {% if products %}
+        <div class="mb-4">
+            <h3 class="fw-bold">{{ products.count }} product{{ products.count|pluralize }} in this category</h3>
+        </div>
+        <div class="row g-4">
+            {% for product in products %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="product-card">
+                    <div class="product-image-wrapper">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                 onerror="this.src='https://via.placeholder.com/400x400/000000/ffffff?text=No+Image'">
+                        {% else %}
+                            <img src="https://via.placeholder.com/400x400/000000/ffffff?text=No+Image" alt="{{ product.name }}">
                         {% endif %}
-                    {% endfor %}
-
-
+                        {% if product.is_sale %}
+                            <div class="sale-badge">Sale</div>
+                        {% endif %}
+                    </div>
+                    <div class="product-card-body">
+                        <h5 class="product-title">{{ product.name }}</h5>
+                        <div class="product-price">
+                            {% if product.is_sale %}
+                                <span class="price-original">${{ product.price }}</span>
+                                <span class="price-current">${{ product.sale_price }}</span>
+                            {% else %}
+                                <span class="price-current">${{ product.price }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-actions">
+                            <a href="{% url 'product' product.id %}" class="btn btn-primary w-100">
+                                <i class="bi bi-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </section>
-
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-inbox"></i>
+            </div>
+            <h3>No products in this category</h3>
+            <p>Check back soon for new additions.</p>
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
 {% endblock %}

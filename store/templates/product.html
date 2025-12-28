@@ -1,66 +1,93 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - PeopleCart{% endblock %}
+
 {% block content %}
+<section class="section-padding">
+    <div class="container">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'category' product.category.name %}">{{ product.category.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+            </ol>
+        </nav>
 
-
-
-<div class="container">
-<br/>
-
-
-<div class="card mb-3">
-  <div class="row g-0">
-    <div class="col-md-4">
-      <img src="{{ product.image.url }}" class="img-fluid rounded-start" alt="...">
-    </div>
-    <div class="col-md-8">
-      <div class="card-body">
-        <center>
-        <h5 class="card-title">{{ product.name }}</h5>
-        <br/>
-        <p class="card-text justified">{{ product.description }}</p>
-        
-        {% if product.is_sale %}
-        <div class="d-flex justify-content-center small text-warning mb-2">
-                <div class="bi-star-fill"></div>
-                &nbsp;&nbsp;Sale!&nbsp;&nbsp;
-                <div class="bi-star-fill"></div>
-                </div>
-
-                <!-- Product price-->
-                <strike>
-                ${{ product.price }}
-                </strike>
-                &nbsp;
-                ${{ product.sale_price }}
-
-
-
-        {% else %}
-            ${{ product.price }}
-            
-        {% endif %}
-            <br/><br/>
-<div class="row justify-content-center">
-    <div class="col-md-2">Quantity:</div>
-                <div class="col-md-2">
-                <select class="form-select form-select-sm" id="qty-cart">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
+        <div class="row g-4">
+            <div class="col-md-5">
+                <div class="product-detail-image">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid w-100"
+                             onerror="this.src='https://via.placeholder.com/600x800/1a1a1a/ffffff?text=No+Image'">
+                    {% else %}
+                        <img src="https://via.placeholder.com/600x800/1a1a1a/ffffff?text=No+Image" alt="{{ product.name }}" class="img-fluid w-100">
+                    {% endif %}
                 </div>
             </div>
-            <br/><br/>
-        <a href="{% url 'home'%}" class="btn btn-secondary">Home</a>
-        <button type="button"  class="btn btn-secondary" id="add-cart">Add To Cart</button>
-
-    </center>
-      </div>
+            <div class="col-md-7">
+                <div class="product-detail-info">
+                    <h1 class="product-detail-title">{{ product.name }}</h1>
+                    
+                    <div class="mb-4">
+                        <span class="badge bg-primary mb-3">{{ product.category.name }}</span>
+                        {% if product.is_sale %}
+                            <span class="badge bg-danger ms-2">On Sale</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        {% if product.is_sale %}
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="price-original fs-4">${{ product.price }}</span>
+                                <span class="price-current fs-2">${{ product.sale_price }}</span>
+                                <span class="badge bg-success">Save {{ product.price|floatformat:0|add:"-"|add:product.sale_price|floatformat:0 }}%</span>
+                            </div>
+                        {% else %}
+                            <span class="price-current fs-2">${{ product.price }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="product-detail-description">
+                        <h5 class="mb-3">Description</h5>
+                        <p>{{ product.description|default:"No description available for this product." }}</p>
+                    </div>
+                    
+                    <div class="border-top pt-4 mt-4">
+                        <div class="row align-items-center mb-4">
+                            <div class="col-auto">
+                                <label class="form-label fw-semibold">Quantity:</label>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select qty-selector" id="qty-cart" style="width: 100px;">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <button type="button" class="btn btn-primary btn-lg flex-fill" id="add-cart" 
+                                    data-product-id="{{ product.id }}"
+                                    data-product-name="{{ product.name }}"
+                                    data-product-price="{% if product.is_sale %}{{ product.sale_price }}{% else %}{{ product.price }}{% endif %}">
+                                <i class="bi bi-cart-plus"></i> Add to Cart
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-arrow-left"></i> Continue Shopping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-</div>
-        	
+</section>
 {% endblock %}

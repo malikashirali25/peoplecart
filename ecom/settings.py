@@ -141,7 +141,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Set sandbox to true
 PAYPAL_TEST = True
 
-PAYPAL_RECEIVER_EMAIL = 'your email' # Business Sandbox account
+# PayPal Business Sandbox account email
+# Replace with your actual PayPal sandbox business account email
+PAYPAL_RECEIVER_EMAIL = 'sb-1234567890@business.example.com'  # Update with your PayPal sandbox email
 
 GRAPH_MODELS = {
   'all_applications': True,

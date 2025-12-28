@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shopping Cart - PeopleCart{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<section class="hero-section" style="padding: 3rem 0;">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1>Shopping Cart</h1>
+            <p>Review your items before checkout</p>
+        </div>
+    </div>
+</section>
+
+<!-- Cart Section -->
+<section class="section-padding">
+    <div class="container">
+        <div id="cart-container">
+            <!-- Cart items will be loaded here via JavaScript -->
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading cart...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Cart Template (hidden, used by JavaScript) -->
+<template id="cart-empty-template">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5 text-center">
+                    <i class="bi bi-cart-x text-muted" style="font-size: 4rem;"></i>
+                    <h3 class="mt-4 mb-2">Your cart is empty</h3>
+                    <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
+                    <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-arrow-left"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="cart-items-template">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cart3"></i> Cart Items (<span id="cart-item-count">0</span>)
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div id="cart-items-list">
+                        <!-- Cart items will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span id="cart-subtotal">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax (10%):</span>
+                        <span id="cart-tax">$0.00</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <strong>Total:</strong>
+                        <strong class="text-primary fs-5" id="cart-total">$0.00</strong>
+                    </div>
+                    <button class="btn btn-primary btn-lg w-100 mb-3" id="checkout-btn" disabled>
+                        <i class="bi bi-credit-card"></i> Proceed to Checkout
+                    </button>
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="cart-item-template">
+    <div class="cart-item border-bottom p-4" data-product-id="">
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                <img src="" alt="" class="img-fluid rounded cart-item-image" style="max-height: 100px; object-fit: cover;">
+            </div>
+            <div class="col-md-4">
+                <h6 class="mb-1 cart-item-name"></h6>
+                <small class="text-muted cart-item-category"></small>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Quantity</label>
+                <select class="form-select form-select-sm cart-item-qty">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+            <div class="col-md-2 text-center">
+                <div class="cart-item-price fw-bold"></div>
+                <small class="text-muted">per item</small>
+            </div>
+            <div class="col-md-2 text-end">
+                <div class="cart-item-total fw-bold text-primary"></div>
+                <button class="btn btn-sm btn-outline-danger mt-2 cart-item-remove">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadCart();
+    
+    // Checkout button click handler
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', function() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+            // Redirect to checkout with cart data
+            const cartData = encodeURIComponent(JSON.stringify(cart));
+            window.location.href = `/checkout/?cart=${cartData}`;
+        });
+    }
+});
+
+function loadCart() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const container = document.getElementById('cart-container');
+    
+    if (cart.length === 0) {
+        const template = document.getElementById('cart-empty-template');
+        container.innerHTML = template.innerHTML;
+        updateCartSummary(0, 0, 0);
+        return;
+    }
+    
+    // Load product details from server
+    const productIds = cart.map(item => item.id);
+    
+    // For now, we'll use the cart data directly
+    // In a real app, you'd fetch product details from the server
+    displayCartItems(cart);
+}
+
+function displayCartItems(cart) {
+    const container = document.getElementById('cart-container');
+    const itemsTemplate = document.getElementById('cart-items-template');
+    const itemTemplate = document.getElementById('cart-item-template');
+    
+    container.innerHTML = itemsTemplate.innerHTML;
+    const itemsList = document.getElementById('cart-items-list');
+    
+    let subtotal = 0;
+    
+    for (let item of cart) {
+        // Fetch product details
+        const product = fetchProductDetails(item.id);
+        const cartItem = itemTemplate.content.cloneNode(true);
+        const cartItemDiv = cartItem.querySelector('.cart-item');
+        
+        cartItemDiv.setAttribute('data-product-id', item.id);
+        
+        // Set image
+        const img = cartItemDiv.querySelector('.cart-item-image');
+        if (product.image) {
+            img.src = product.image;
+            img.onerror = function() {
+                this.src = 'https://via.placeholder.com/200x200/000000/ffffff?text=No+Image';
+            };
+        } else {
+            img.src = 'https://via.placeholder.com/200x200/000000/ffffff?text=No+Image';
+        }
+        img.alt = product.name;
+        
+        // Set name and category
+        cartItemDiv.querySelector('.cart-item-name').textContent = product.name || item.name;
+        cartItemDiv.querySelector('.cart-item-category').textContent = product.category || '';
+        
+        // Set quantity
+        const qtySelect = cartItemDiv.querySelector('.cart-item-qty');
+        qtySelect.value = item.quantity;
+        qtySelect.addEventListener('change', function() {
+            updateCartItemQuantity(item.id, parseInt(this.value));
+        });
+        
+        // Set price - use product price if available, otherwise use cart item price
+        const price = product.price || parseFloat(item.price);
+        cartItemDiv.querySelector('.cart-item-price').textContent = '$' + price.toFixed(2);
+        
+        // Update cart item price if product price is different
+        if (product.price && Math.abs(product.price - parseFloat(item.price)) > 0.01) {
+            // Update the cart item price
+            item.price = product.price;
+        }
+        
+        // Set total
+        const itemTotal = price * item.quantity;
+        cartItemDiv.querySelector('.cart-item-total').textContent = '$' + itemTotal.toFixed(2);
+        subtotal += itemTotal;
+        
+        // Remove button
+        cartItemDiv.querySelector('.cart-item-remove').addEventListener('click', function() {
+            removeCartItem(item.id);
+        });
+        
+        itemsList.appendChild(cartItemDiv);
+    }
+    
+    // Update localStorage with any price changes
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    updateCartSummary(cart.length, subtotal);
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.disabled = cart.length === 0;
+    }
+}
+
+// Product data from server
+const productsData = {{ products_json|safe }};
+
+function fetchProductDetails(productId) {
+    const productIdStr = String(productId);
+    if (productsData && productsData[productIdStr]) {
+        const product = productsData[productIdStr];
+        return {
+            id: product.id,
+            name: product.name,
+            price: product.is_sale ? product.sale_price : product.price,
+            image: product.image_url ? '/media/' + product.image_url : null,
+            category: product.category,
+            description: product.description
+        };
+    }
+    // Fallback
+    return {
+        id: productId,
+        name: 'Product ' + productId,
+        price: 0,
+        image: null,
+        category: '',
+        description: ''
+    };
+}
+
+function updateCartItemQuantity(productId, newQuantity) {
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const item = cart.find(i => String(i.id) === String(productId));
+    
+    if (item) {
+        if (newQuantity <= 0) {
+            removeCartItem(productId);
+            return;
+        }
+        item.quantity = newQuantity;
+        localStorage.setItem('cart', JSON.stringify(cart));
+        loadCart();
+        updateCartBadge();
+    }
+}
+
+function removeCartItem(productId) {
+    if (confirm('Are you sure you want to remove this item from your cart?')) {
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        cart = cart.filter(item => String(item.id) !== String(productId));
+        localStorage.setItem('cart', JSON.stringify(cart));
+        loadCart();
+        updateCartBadge();
+        showCartNotification('Item removed from cart', 1);
+    }
+}
+
+function updateCartSummary(itemCount, subtotal) {
+    document.getElementById('cart-item-count').textContent = itemCount;
+    document.getElementById('cart-subtotal').textContent = '$' + subtotal.toFixed(2);
+    
+    const tax = subtotal * 0.10; // 10% tax
+    document.getElementById('cart-tax').textContent = '$' + tax.toFixed(2);
+    
+    const total = subtotal + tax;
+    document.getElementById('cart-total').textContent = '$' + total.toFixed(2);
+}
+
+// Helper function to get product image URL (simplified)
+function getProductImageUrl(productId) {
+    // This would normally fetch from the server
+    // For now, return placeholder
+    return 'https://via.placeholder.com/200x200/000000/ffffff?text=No+Image';
+}
+</script>
+
+{% endblock %}
+
